@@ -1,0 +1,18 @@
+{
+    "test_name": "resnet_1",
+    "batch_size": 32,
+    "epochs": 100,
+    "lr": 1e-4,
+    "model_name": "ResNet",
+    "model_kwargs": {
+        "in_channels": 1,
+        "out_classes": 14,
+        "block_n": 3,
+        "layer_n": 3
+    },
+    "dataset_name": "EnchantNDataset",
+    "dataset_kwargs": {
+        "data_dir": "data/enchant_n_cut"
+    },
+    "memo": "test"
+}
