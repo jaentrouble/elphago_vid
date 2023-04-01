@@ -1,0 +1,17 @@
+{
+    "test_name": "advice_resnet18_1",
+    "batch_size": 32,
+    "epochs": -1,
+    "patience": 100,
+    "lr": 1e-3,
+    "model_name": "vision_resnet18",
+    "model_kwargs": {
+        "num_classes": 132
+    },
+    "dataset_name": "AdviceDataset",
+    "dataset_kwargs": {
+        "data_dir": "data/advice_gen",
+        "multiplier": 320
+    },
+    "memo": "test"
+}

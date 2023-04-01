@@ -41,6 +41,8 @@ class Trainer():
         t = tqdm.trange(self.epochs, ncols=100)
         for epoch in t:
             for x, y in self.train_loader:
+                x = x.to('cuda')
+                y = y.to('cuda')
                 y_hat = self.model(x)
                 loss = self.loss_fn(y_hat, y)
                 loss_avg.update(loss)

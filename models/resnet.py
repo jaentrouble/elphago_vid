@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchvision.models import resnet18
 
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, layer_n) -> None:
@@ -37,3 +38,5 @@ class ResNet(nn.Module):
         x = x.reshape(x.shape[0], -1)
         return x
     
+def vision_resnet18(num_classes):
+    return resnet18(num_classes=num_classes)
