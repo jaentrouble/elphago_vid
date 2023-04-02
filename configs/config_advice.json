@@ -1,10 +1,10 @@
 {
-    "test_name": "advice_resnet18_1",
+    "test_name": "advice_resnet50_1",
     "batch_size": 32,
     "epochs": -1,
     "patience": 100,
     "lr": 1e-3,
-    "model_name": "vision_resnet18",
+    "model_name": "vision_resnet50",
     "model_kwargs": {
         "num_classes": 132
     },
@@ -13,5 +13,5 @@
         "data_dir": "data/advice_gen",
         "multiplier": 320
     },
-    "memo": "test"
+    "memo": "try resnet50"
 }

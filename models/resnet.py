@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torchvision.models import resnet18
+from torchvision.models import resnet18, resnet50
 
 class ResBlock(nn.Module):
     def __init__(self, in_channels, out_channels, kernel_size, layer_n) -> None:
@@ -40,3 +40,6 @@ class ResNet(nn.Module):
     
 def vision_resnet18(num_classes):
     return resnet18(num_classes=num_classes)
+
+def vision_resnet50(num_classes):
+    return resnet50(num_classes=num_classes)
