@@ -1,0 +1,16 @@
+{
+    "test_name": "advice_two_resnet18_1",
+    "batch_size": 64,
+    "epochs": -1,
+    "patience": 5,
+    "lr": 1e-3,
+    "model_name": "vision_resnet18",
+    "model_kwargs": {
+        "num_classes": 88
+    },
+    "dataset_name": "AdviceTwoOptionDataset",
+    "dataset_kwargs": {
+        "data_dir": "data/advice_gen"
+    },
+    "memo": "Two option prediction"
+}

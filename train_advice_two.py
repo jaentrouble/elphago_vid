@@ -57,7 +57,8 @@ class Trainer():
     
     def train(self):
         loss_avg = tm.MeanMetric().to('cuda')
-        acc_avg = tm.Accuracy(task='multiclass', num_classes=44).to('cuda')
+        acc1_avg = tm.Accuracy(task='multiclass', num_classes=44).to('cuda')
+        acc2_avg = tm.Accuracy(task='multiclass', num_classes=44).to('cuda')
         if self.epochs < 0:
             t = tqdm.tqdm(iter(itertools.count()), ncols=100, unit='epoch')
         else:
@@ -67,38 +68,52 @@ class Trainer():
         for epoch in t:
             t_epoch = tqdm.tqdm(self.train_loader, ncols=100, leave=False)
             last_n = 0
-            for x, y in t_epoch:
+            for x, y1, y2 in t_epoch:
                 x = x.to('cuda')
-                y = y.to('cuda')
-                y_hat = self.model(x)
-                loss = self.loss_fn(y_hat, y)
-                loss_avg.update(loss)
-                acc_avg.update(y_hat.argmax(dim=1), y)
+                y1 = y1.to('cuda')
+                y2 = y2.to('cuda')
+                logits = self.model(x)
+                logits = logits.reshape(logits.shape[0], 2, -1)
+                logit1 = logits[:, 0, :]
+                logit2 = logits[:, 1, :]
+                loss1 = self.loss_fn(logit1, y1)
+                loss2 = self.loss_fn(logit2, y2)
+                loss = loss1 + loss2
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
+
+                loss_avg.update(loss)
+                acc1_avg.update(logit1, y1)
+                acc2_avg.update(logit2, y2)
+
                 if t_epoch.n - last_n > 100:
                     t_epoch.set_postfix(loss=loss_avg.compute().item(), 
-                                        acc=acc_avg.compute().item())
+                                        acc1=acc1_avg.compute().item(),
+                                        acc2=acc2_avg.compute().item())
+
                     last_n = t_epoch.n
             self.tb_writer.add_scalar('loss', loss_avg.compute(), epoch)
-            self.tb_writer.add_scalar('acc', acc_avg.compute(), epoch)
-            self.lr_scheduler.step(acc_avg.compute())
-            if acc_avg.compute() > best_acc:
-                best_acc = acc_avg.compute()
+            self.tb_writer.add_scalar('acc1', acc1_avg.compute(), epoch)
+            self.tb_writer.add_scalar('acc2', acc2_avg.compute(), epoch)
+            acc_avg = (acc1_avg.compute() + acc2_avg.compute()) / 2
+            self.lr_scheduler.step(acc_avg)
+            if acc_avg > best_acc:
+                best_acc = acc_avg
                 best_epoch = epoch
                 torch.save(self.model.state_dict(), self.log_dir/f'checkpoints/best_acc.pt')
             else:
                 if epoch - best_epoch > self.patience:
                     break
-            t.set_postfix(loss=loss_avg.compute().item(), acc=acc_avg.compute().item(),
+            t.set_postfix(loss=loss_avg.compute().item(), acc=acc_avg.item(),
                           patience=epoch-best_epoch, lr=self.optimizer.param_groups[0]['lr'])
             loss_avg.reset()
-            acc_avg.reset()
+            acc1_avg.reset()
+            acc2_avg.reset()
         t.close()
 
 if __name__ == '__main__':
-    with open('configs/config_advice_one.json') as f:
+    with open('configs/config_advice_two.json') as f:
         config = json.load(f)
     trainer = Trainer(**config)
     with open(trainer.log_dir/'config.json', 'w') as f:

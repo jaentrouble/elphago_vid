@@ -36,8 +36,8 @@ class ResNet(nn.Module):
         for l in self.layers:
             x = l(x)
         x = x.reshape(x.shape[0], -1)
-        return x
-    
+        return x  
+
 def vision_resnet18(num_classes):
     return resnet18(num_classes=num_classes)
 
