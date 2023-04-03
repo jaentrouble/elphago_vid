@@ -14,9 +14,21 @@ class ClipboardImageApp:
         self.button = tk.Button(self.window, text="Get Image from Clipboard", command=self.on_button_click)
         self.button.pack()
 
+        self.top_left_button = tk.Button(self.window, text="Top Left", command=self.set_top_left_mode)
+        self.top_left_button.pack()
+
+        self.bottom_right_button = tk.Button(self.window, text="Bottom Right", command=self.set_bottom_right_mode)
+        self.bottom_right_button.pack()
+
+
         self.image_np = None
-        self.click_h = None
-        self.click_w = None
+        self.current_mode = 'top_left'
+        self.tl_h = None
+        self.tl_w = None
+        self.br_h = None
+        self.br_w = None
+
+
 
     def get_image_from_clipboard(self):
         try:
@@ -63,8 +75,26 @@ class ClipboardImageApp:
         if self.image_np is not None and 0 <= self.click_h < self.image_np.shape[0] and 0 <= self.click_w < self.image_np.shape[1]:
             print(f"Clicked on image at height: {self.click_h}, width: {self.click_w}")
             print(f"Pixel value: {self.image_np[self.click_h][self.click_w]}")
+
+            if self.current_mode == "top_left":
+                self.tl_h = self.click_h
+                self.tl_w = self.click_w
+                print(f"Top-left corner set to height: {self.tl_h}, width: {self.tl_w}")
+
+            elif self.current_mode == "bottom_right":
+                self.br_h = self.click_h
+                self.br_w = self.click_w
+                print(f"Bottom-right corner set to height: {self.br_h}, width: {self.br_w}")
+
         else:
             print("Clicked outside of the image")
+            
+    def set_top_left_mode(self):
+        self.current_mode = "top_left"
+
+    def set_bottom_right_mode(self):
+        self.current_mode = "bottom_right"
+
 
     def run(self):
         self.window.mainloop()
