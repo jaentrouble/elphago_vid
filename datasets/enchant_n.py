@@ -26,6 +26,7 @@ class EnchantNDataset(Dataset):
         return len(self.imgs)*self.multiplier
 
     def __getitem__(self, idx):
+        idx = idx % len(self.imgs)
         transformed_img = self.transform(self.imgs[idx])
         transformed_img = transformed_img.to(torch.float32)/ 255
 

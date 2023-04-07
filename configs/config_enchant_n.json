@@ -2,7 +2,7 @@
     "test_name": "enchant_n_resnet18_aug_1",
     "batch_size": 32,
     "epochs": -1,
-    "patience": 10,
+    "patience": 4,
     "lr": 1e-3,
     "model_name": "vision_resnet18",
     "model_kwargs": {
@@ -10,7 +10,8 @@
     },
     "dataset_name": "EnchantNDataset",
     "dataset_kwargs": {
-        "data_dir": "data/enchant_n_cut"
+        "data_dir": "data/enchant_n_cut",
+        "multiplier": 100
     },
     "memo": "resnet18 with augmentation"
 }
