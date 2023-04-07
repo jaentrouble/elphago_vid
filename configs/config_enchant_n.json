@@ -1,18 +1,16 @@
 {
-    "test_name": "resnet_1",
+    "test_name": "enchant_n_resnet18_aug_1",
     "batch_size": 32,
-    "epochs": 100,
-    "lr": 1e-4,
-    "model_name": "ResNet",
+    "epochs": -1,
+    "patience": 10,
+    "lr": 1e-3,
+    "model_name": "vision_resnet18",
     "model_kwargs": {
-        "in_channels": 1,
-        "out_classes": 14,
-        "block_n": 3,
-        "layer_n": 3
+        "num_classes": 14
     },
     "dataset_name": "EnchantNDataset",
     "dataset_kwargs": {
         "data_dir": "data/enchant_n_cut"
     },
-    "memo": "test"
+    "memo": "resnet18 with augmentation"
 }
