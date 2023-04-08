@@ -9,10 +9,6 @@ ADVICE_MODEL = 'advice_resnet18_aug_1'
 ADVICE_ONE_MODEL = 'advice_one_resnet18_1'
 ADVICE_TWO_MODEL = 'advice_two_resnet18_1'
 ENCHANT_N_MODEL = 'enchant_n_resnet18_aug_1'
-MESSAGE_PATH = 'data/message_clean.csv'
-OPT_NAME_PATH = 'data/options.csv'
-ONE_OPT_ADV_PATH = 'data/one_option_adv.json'
-TWO_OPT_ADV_PATH = 'data/two_option_adv.json'
 
 class ImageAnalyzer():
     def __init__(
@@ -22,10 +18,6 @@ class ImageAnalyzer():
         advice_one_model_name=ADVICE_ONE_MODEL,
         advice_two_model_name=ADVICE_TWO_MODEL,
         enchant_n_model_name=ENCHANT_N_MODEL,
-        message_path=MESSAGE_PATH,
-        opt_name_path=OPT_NAME_PATH,
-        one_opt_adv_path=ONE_OPT_ADV_PATH,
-        two_opt_adv_path=TWO_OPT_ADV_PATH
     ) -> None:
         with open(ratio_data_path, 'r') as f:
             self.ratio_data = json.load(f)
@@ -85,12 +77,6 @@ class ImageAnalyzer():
         enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt'))
         self.enchant_n_model = enchant_n_model.eval()    
 
-        self.messages = pd.read_csv(message_path)
-        self.option_names = pd.read_csv(opt_name_path)
-        with open(one_opt_adv_path,'r') as f:
-            self.one_option_adv = json.load(f)
-        with open(two_opt_adv_path,'r') as f:
-            self.two_option_adv = json.load(f)
 
     def set_abs_values(self, left_top, right_bottom):
         height = right_bottom[0] - left_top[0]

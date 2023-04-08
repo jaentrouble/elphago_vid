@@ -2,6 +2,14 @@ import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk, ImageGrab
 from image_analyzer import ImageAnalyzer
+import pandas as pd
+import json
+
+MESSAGE_PATH = 'data/message_clean.csv'
+OPT_NAME_PATH = 'data/options.csv'
+ONE_OPT_ADV_PATH = 'data/one_option_adv.json'
+TWO_OPT_ADV_PATH = 'data/two_option_adv.json'
+
 
 class ClipboardImageApp:
     def __init__(self):
@@ -31,16 +39,27 @@ class ClipboardImageApp:
 
         self.image_analyzer = ImageAnalyzer()
 
+        self.messages = pd.read_csv(MESSAGE_PATH)
+        self.options = pd.read_csv(OPT_NAME_PATH)
+        with open(ONE_OPT_ADV_PATH,'r') as f:
+            self.one_option_adv = json.load(f)
+        with open(TWO_OPT_ADV_PATH,'r') as f:
+            self.two_option_adv = json.load(f)
+
     def analyze_image(self):
         if self.image_np is not None:
             options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
             print(f"Options: {options}")
             print(f"Is available: {is_avail}")
             print(f"Option gauge: {opt_gauge}")
-            print(f"Advanced prediction: {adv_pred}")
-            print(f"Option one prediction: {opt_one_pred}")
-            print(f"Option two prediction 1: {opt_two_pred_1}")
-            print(f"Option two prediction 2: {opt_two_pred_2}")
+            for ap, op, tp1, tp2 in zip(adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2):
+                adv_str = self.messages.iloc[ap].Desc1
+                if ap in self.one_option_adv:
+                    adv_str = adv_str.replace('{0}', self.options.iloc[op].option_name)
+                elif ap in self.two_option_adv:
+                    adv_str = adv_str.replace('{0}', self.options.iloc[tp1].option_name)
+                    adv_str = adv_str.replace('{1}', self.options.iloc[tp2].option_name)
+                print(f"Advice prediction: {adv_str}")
             print(f"Enchantment prediction: {enchant_n_pred}")
 
         else:
