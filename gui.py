@@ -1,6 +1,7 @@
 import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk, ImageGrab
+from image_analyzer import ImageAnalyzer
 
 class ClipboardImageApp:
     def __init__(self):
@@ -28,6 +29,23 @@ class ClipboardImageApp:
         self.br_h = None
         self.br_w = None
 
+        self.image_analyzer = ImageAnalyzer()
+
+    def analyze_image(self):
+        if self.image_np is not None:
+            options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
+            print(f"Options: {options}")
+            print(f"Is available: {is_avail}")
+            print(f"Option gauge: {opt_gauge}")
+            print(f"Advanced prediction: {adv_pred}")
+            print(f"Option one prediction: {opt_one_pred}")
+            print(f"Option two prediction 1: {opt_two_pred_1}")
+            print(f"Option two prediction 2: {opt_two_pred_2}")
+            print(f"Enchantment prediction: {enchant_n_pred}")
+
+        else:
+            print("No image to analyze")
+
     def resize_image_for_display(self, img, max_width=1280, max_height=720):
         width, height = img.size
         aspect_ratio = float(width) / float(height)
@@ -49,7 +67,7 @@ class ClipboardImageApp:
             img_rgb = img.convert('RGB')
             img_rgb = img_rgb.resize((1920,1080), Image.Resampling.BILINEAR)
             self.image_np = np.array(img_rgb)
-            print(f"Image shape: {self.image_np.shape}")
+            self.analyze_image()
             return img_rgb
         except Exception as e:
             print(f"Error getting image from clipboard: {e}")

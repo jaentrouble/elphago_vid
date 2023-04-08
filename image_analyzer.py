@@ -18,10 +18,10 @@ class ImageAnalyzer():
     def __init__(
         self,
         ratio_data_path=RATIO_DATA,
-        advice_model=ADVICE_MODEL,
-        advice_one_model=ADVICE_ONE_MODEL,
-        advice_two_model=ADVICE_TWO_MODEL,
-        enchant_n_model=ENCHANT_N_MODEL,
+        advice_model_name=ADVICE_MODEL,
+        advice_one_model_name=ADVICE_ONE_MODEL,
+        advice_two_model_name=ADVICE_TWO_MODEL,
+        enchant_n_model_name=ENCHANT_N_MODEL,
         message_path=MESSAGE_PATH,
         opt_name_path=OPT_NAME_PATH,
         one_opt_adv_path=ONE_OPT_ADV_PATH,
@@ -61,28 +61,28 @@ class ImageAnalyzer():
 
         self.set_abs_values(self.ratio_data['fhd_left_top'], self.ratio_data['fhd_right_bottom'])
 
-        with open(f'logs/{advice_model}/config.json') as f:
+        with open(f'logs/{advice_model_name}/config.json') as f:
             advice_config = json.load(f)
-        advice_model = getattr(models, advice_config['model_name'])(**advice_config['model_kwargs']).to('cuda')
-        advice_model.load_state_dict(torch.load(f'logs/{advice_model}/checkpoints/best_acc.pt'))
+        advice_model = getattr(models, advice_config['model_name'])(**advice_config['model_kwargs'])
+        advice_model.load_state_dict(torch.load(f'logs/{advice_model_name}/checkpoints/best_acc.pt'))
         self.advice_model = advice_model.eval()
 
-        with open(f'logs/{advice_one_model}/config.json') as f:
+        with open(f'logs/{advice_one_model_name}/config.json') as f:
             advice_one_config = json.load(f)
-        advice_one_model = getattr(models, advice_one_config['model_name'])(**advice_one_config['model_kwargs']).to('cuda')
-        advice_one_model.load_state_dict(torch.load(f'logs/{advice_one_model}/checkpoints/best_acc.pt'))
+        advice_one_model = getattr(models, advice_one_config['model_name'])(**advice_one_config['model_kwargs'])
+        advice_one_model.load_state_dict(torch.load(f'logs/{advice_one_model_name}/checkpoints/best_acc.pt'))
         self.advice_one_model = advice_one_model.eval()
 
-        with open(f'logs/{advice_two_model}/config.json') as f:
+        with open(f'logs/{advice_two_model_name}/config.json') as f:
             advice_two_config = json.load(f)
-        advice_two_model = getattr(models, advice_two_config['model_name'])(**advice_two_config['model_kwargs']).to('cuda')
-        advice_two_model.load_state_dict(torch.load(f'logs/{advice_two_model}/checkpoints/best_acc.pt'))
+        advice_two_model = getattr(models, advice_two_config['model_name'])(**advice_two_config['model_kwargs'])
+        advice_two_model.load_state_dict(torch.load(f'logs/{advice_two_model_name}/checkpoints/best_acc.pt'))
         self.advice_two_model = advice_two_model.eval()
 
-        with open(f'logs/{enchant_n_model}/config.json') as f:
+        with open(f'logs/{enchant_n_model_name}/config.json') as f:
             enchant_n_config = json.load(f)
-        enchant_n_model = getattr(models, enchant_n_config['model_name'])(**enchant_n_config['model_kwargs']).to('cuda')
-        enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model}/checkpoints/best_acc.pt'))
+        enchant_n_model = getattr(models, enchant_n_config['model_name'])(**enchant_n_config['model_kwargs'])
+        enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt'))
         self.enchant_n_model = enchant_n_model.eval()    
 
         self.messages = pd.read_csv(message_path)
@@ -173,8 +173,8 @@ class ImageAnalyzer():
         
         prob_color_average = np.zeros((5,3))
         for i in range(5):
-            prob_color_average[i] = np.mean(img[self.prob_color_pos[i,0]:self.prob_color_pos[i,1], 
-                                                self.prob_color_pos[i,2]:self.prob_color_pos[i,3]], axis=(0,1))
+            prob_color_average[i] = np.mean(img[self.prob_pos[i,0]:self.prob_pos[i,1], 
+                                                self.prob_pos[i,2]:self.prob_pos[i,3]], axis=(0,1))
         red_blue_ratrio = prob_color_average[:,0]/prob_color_average[:,2]
         is_avail = np.ones((5), dtype=bool)
         for i, r in enumerate(red_blue_ratrio):
@@ -216,7 +216,7 @@ class ImageAnalyzer():
         adv_3_img_tensor = torch.from_numpy(adv_3_image).permute(2,0,1).unsqueeze(0).float()/255
         adv_images = torch.cat((adv_1_img_tensor, adv_2_img_tensor, adv_3_img_tensor), dim=0)
         with torch.no_grad():
-            adv_pred = self.adv_model(adv_images).argmax(dim=1).numpy()
+            adv_pred = self.advice_model(adv_images).argmax(dim=1).numpy()
             opt_one_pred = self.advice_one_model(adv_images).argmax(dim=1).numpy()
             opt_two_pred_1 = self.advice_two_model(adv_images)[:,:44].argmax(dim=1).numpy()
             opt_two_pred_2 = self.advice_two_model(adv_images)[:,44:].argmax(dim=1).numpy()
