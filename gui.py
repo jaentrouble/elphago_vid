@@ -17,17 +17,36 @@ class ClipboardImageApp:
         self.window.title("Clipboard Image")
 
         self.canvas = tk.Canvas(self.window, width=300, height=200)
-        self.canvas.pack()
-        self.canvas.bind("<Button-1>", self.on_canvas_click)
+        self.canvas.grid(row=0, column=0, columnspan=3, sticky="nsew")
+        # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
         self.button = tk.Button(self.window, text="Get Image from Clipboard", command=self.on_button_click)
-        self.button.pack()
+        self.button.grid(row=1, column=1, sticky="nsew")
 
-        self.top_left_button = tk.Button(self.window, text="Top Left", command=self.set_top_left_mode)
-        self.top_left_button.pack()
+        # self.top_left_button = tk.Button(self.window, text="Top Left", command=self.set_top_left_mode)
+        # self.top_left_button.pack()
 
-        self.bottom_right_button = tk.Button(self.window, text="Bottom Right", command=self.set_bottom_right_mode)
-        self.bottom_right_button.pack()
+        # self.bottom_right_button = tk.Button(self.window, text="Bottom Right", command=self.set_bottom_right_mode)
+        # self.bottom_right_button.pack()
+
+        self.label_text_vars = [tk.StringVar() for _ in range(6)]
+        for i in range(6):
+            label = tk.Label(self.window, textvariable=self.label_text_vars[i])
+            label.grid(row=i+2, column=1)
+
+        self.rect_frames = []
+        self.rect_texts = []
+        for i in range(3):
+            rect_frame = tk.Frame(self.window, bg="white", height=50)
+            rect_frame.grid(row=8, column=i, sticky="nsew")
+            self.window.columnconfigure(i, weight=1)
+            self.rect_frames.append(rect_frame)
+
+            rect_text = tk.Text(rect_frame, bg="white", height=5,width=40, wrap=tk.WORD)
+            rect_text.tag_configure('center', justify='center')  # Center-align the text
+            rect_text.pack(fill=tk.BOTH, expand=True)
+            self.rect_texts.append(rect_text)
+
 
 
         self.image_np = None
@@ -46,22 +65,30 @@ class ClipboardImageApp:
         with open(TWO_OPT_ADV_PATH,'r') as f:
             self.two_option_adv = json.load(f)
 
+
+
     def analyze_image(self):
         if self.image_np is not None:
             options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
-            print(f"Options: {options}")
-            print(f"Is available: {is_avail}")
-            print(f"Option gauge: {opt_gauge}")
-            for ap, op, tp1, tp2 in zip(adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2):
+            options_str = ["▣"*i + "□"*(10-i) for i in options]
+            is_avail_str = ['가능' if i else '봉인' for i in is_avail]
+            for i in range(5):
+                self.label_text_vars[i].set(f"{is_avail_str[i]} {options_str[i]}")
+            for i, (og, ap, op, tp1, tp2) in enumerate(zip(opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2)):
                 adv_str = self.messages.iloc[ap].Desc1
                 if ap in self.one_option_adv:
                     adv_str = adv_str.replace('{0}', self.options.iloc[op].option_name)
                 elif ap in self.two_option_adv:
                     adv_str = adv_str.replace('{0}', self.options.iloc[tp1].option_name)
                     adv_str = adv_str.replace('{1}', self.options.iloc[tp2].option_name)
-                print(f"Advice prediction: {adv_str}")
-            print(f"Enchantment prediction: {enchant_n_pred}")
-
+                if og == 0:
+                    gauge_str = ''
+                elif og > 0:
+                    gauge_str = '◆' * og + '◇' * (3 - og)
+                elif og < 0:
+                    gauge_str = '●' * (-og) + '○' * (6 + og)
+                self.update_rect_text(i, gauge_str + '\n' + adv_str)
+            self.label_text_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
         else:
             print("No image to analyze")
 
@@ -87,7 +114,6 @@ class ClipboardImageApp:
             img_rgb = img_rgb.resize((1920,1080), Image.Resampling.BILINEAR)
             self.image_np = np.array(img_rgb)
             self.analyze_image()
-            return img_rgb
         except Exception as e:
             print(f"Error getting image from clipboard: {e}")
             return None
@@ -109,18 +135,13 @@ class ClipboardImageApp:
     def update_image(self):
         if self.image_np is not None:
             img = Image.fromarray(self.image_np)
-            width, height = img.size
-            self.canvas.config(width=width, height=height)
-
-            tk_img = ImageTk.PhotoImage(img)
-            self.canvas.create_image(0, 0, anchor=tk.NW, image=tk_img)
-            self.canvas.image = tk_img
+            self.display_image(img)
         else:
             print("No image_np to update")
 
     def on_button_click(self):
-        img = self.get_image_from_clipboard()
-        self.display_image(img)
+        self.get_image_from_clipboard()
+        self.update_image()
 
     def on_canvas_click(self, event):
         self.click_h = event.y
@@ -148,6 +169,13 @@ class ClipboardImageApp:
 
     def set_bottom_right_mode(self):
         self.current_mode = "bottom_right"
+
+    def update_rect_text(self, index, new_text):
+        if 0 <= index < len(self.rect_texts):
+            self.rect_texts[index].delete(1.0, tk.END)
+            self.rect_texts[index].insert(tk.END, new_text, 'center')
+        else:
+            print(f"Invalid rectangle index: {index}")
 
 
     def run(self):

@@ -3,11 +3,12 @@ import numpy as np
 import json
 import models
 import pandas as pd
+from torchvision import transforms
 
 RATIO_DATA = 'data/ratio_data.json'
 ADVICE_MODEL = 'advice_resnet18_aug_1'
-ADVICE_ONE_MODEL = 'advice_one_resnet18_1'
-ADVICE_TWO_MODEL = 'advice_two_resnet18_1'
+ADVICE_ONE_MODEL = 'advice_one_resnet18_aug_1'
+ADVICE_TWO_MODEL = 'advice_two_resnet18_aug_1'
 ENCHANT_N_MODEL = 'enchant_n_resnet18_aug_1'
 
 class ImageAnalyzer():
@@ -75,7 +76,10 @@ class ImageAnalyzer():
             enchant_n_config = json.load(f)
         enchant_n_model = getattr(models, enchant_n_config['model_name'])(**enchant_n_config['model_kwargs'])
         enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt'))
-        self.enchant_n_model = enchant_n_model.eval()    
+        self.enchant_n_model = enchant_n_model.eval()
+        
+        self.resize_advice = transforms.Resize((64, 288))
+        self.resize_enchant_n = transforms.Resize((16, 32))
 
 
     def set_abs_values(self, left_top, right_bottom):
@@ -162,10 +166,11 @@ class ImageAnalyzer():
             prob_color_average[i] = np.mean(img[self.prob_pos[i,0]:self.prob_pos[i,1], 
                                                 self.prob_pos[i,2]:self.prob_pos[i,3]], axis=(0,1))
         red_blue_ratrio = prob_color_average[:,0]/prob_color_average[:,2]
+        green_blue_ratrio = prob_color_average[:,1]/prob_color_average[:,2]
         is_avail = np.ones((5), dtype=bool)
-        for i, r in enumerate(red_blue_ratrio):
-            if r > 1.3:
-                is_avail[i] = False\
+        for i, (r,g) in enumerate(zip(red_blue_ratrio, green_blue_ratrio)):
+            if r > 1.3 and g < 1.2:
+                is_avail[i] = False
         
         order_color_average = np.zeros((3,3,3))
         chaos_color_average = np.zeros((3,6,3))
@@ -200,6 +205,9 @@ class ImageAnalyzer():
         adv_1_img_tensor = torch.from_numpy(adv_1_image).permute(2,0,1).unsqueeze(0).float()/255
         adv_2_img_tensor = torch.from_numpy(adv_2_image).permute(2,0,1).unsqueeze(0).float()/255
         adv_3_img_tensor = torch.from_numpy(adv_3_image).permute(2,0,1).unsqueeze(0).float()/255
+        adv_1_img_tensor = self.resize_advice(adv_1_img_tensor)
+        adv_2_img_tensor = self.resize_advice(adv_2_img_tensor)
+        adv_3_img_tensor = self.resize_advice(adv_3_img_tensor)
         adv_images = torch.cat((adv_1_img_tensor, adv_2_img_tensor, adv_3_img_tensor), dim=0)
         with torch.no_grad():
             adv_pred = self.advice_model(adv_images).argmax(dim=1).numpy()
@@ -208,9 +216,10 @@ class ImageAnalyzer():
             opt_two_pred_2 = self.advice_two_model(adv_images)[:,44:].argmax(dim=1).numpy()
         
         enchant_n_img = img[self.abs_enchant_n_top_left[0]:self.abs_enchant_n_bottom_right[0],
-                            self.abs_enchant_n_top_left[1]:self.abs_enchant_n_bottom_right[1]]
+                            self.abs_enchant_n_top_left[1]:self.abs_enchant_n_bottom_right[1]].copy()
         enchant_n_img_tensor = torch.from_numpy(enchant_n_img).permute(2,0,1).unsqueeze(0).float()/255
-        with torch.no_grad():
-            enchant_n_pred = self.enchant_n_model(enchant_n_img_tensor).argmax(dim=1).numpy()
-        
+        enchant_n_img_tensor = self.resize_enchant_n(enchant_n_img_tensor)
+
+        enchant_n_pred = self.enchant_n_model(enchant_n_img_tensor).argmax(dim=1).cpu().item()
+
         return options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred
