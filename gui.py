@@ -28,30 +28,47 @@ class ClipboardImageApp:
         self.br_h = None
         self.br_w = None
 
+    def resize_image_for_display(self, img, max_width=1280, max_height=720):
+        width, height = img.size
+        aspect_ratio = float(width) / float(height)
 
+        if width > max_width:
+            width = max_width
+            height = int(width / aspect_ratio)
+
+        if height > max_height:
+            height = max_height
+            width = int(height * aspect_ratio)
+
+        return img.resize((width, height), Image.Resampling.BILINEAR)
+    
 
     def get_image_from_clipboard(self):
         try:
             img = ImageGrab.grabclipboard()
-            return img
+            img_rgb = img.convert('RGB')
+            img_rgb = img_rgb.resize((1920,1080), Image.Resampling.BILINEAR)
+            self.image_np = np.array(img_rgb)
+            print(f"Image shape: {self.image_np.shape}")
+            return img_rgb
         except Exception as e:
             print(f"Error getting image from clipboard: {e}")
             return None
 
-    def display_image(self, img):
-        if img:
-            img_rgb = img.convert('RGB')
-            width, height = img_rgb.size
+    def display_image(self, img_rgb):
+        if img_rgb:
+            # Resize the image for display
+            img_resized = self.resize_image_for_display(img_rgb)
+
+            width, height = img_resized.size
             self.canvas.config(width=width, height=height)
 
-            tk_img = ImageTk.PhotoImage(img_rgb)
+            tk_img = ImageTk.PhotoImage(img_resized)
             self.canvas.create_image(0, 0, anchor=tk.NW, image=tk_img)
             self.canvas.image = tk_img
 
-            self.image_np = np.array(img_rgb)
         else:
             print("No image found in clipboard")
-
     def update_image(self):
         if self.image_np is not None:
             img = Image.fromarray(self.image_np)
