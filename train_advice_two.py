@@ -23,6 +23,7 @@ class Trainer():
             model_kwargs:dict,
             dataset_name:str,
             dataset_kwargs:dict,
+            load_path:str=None,
     ) -> None:
         self.test_name = test_name
         self.batch_size = batch_size
@@ -37,6 +38,8 @@ class Trainer():
         self.tb_writer = SummaryWriter(log_dir=str(self.log_dir))
 
         self.model = getattr(models, model_name)(**model_kwargs).to('cuda')
+        if load_path is not None:
+            self.model.load_state_dict(torch.load(load_path))
 
         self.loss_fn = nn.CrossEntropyLoss()
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.lr)

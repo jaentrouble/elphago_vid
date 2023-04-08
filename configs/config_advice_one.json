@@ -1,5 +1,5 @@
 {
-    "test_name": "advice_one_resnet18_1",
+    "test_name": "advice_one_resnet18_aug_1",
     "batch_size": 64,
     "epochs": -1,
     "patience": 10,
@@ -8,9 +8,9 @@
     "model_kwargs": {
         "num_classes": 44
     },
-    "dataset_name": "AdviceOneOptionDataset",
+    "dataset_name": "AdviceOneOptionDatasetAug",
     "dataset_kwargs": {
         "data_dir": "data/advice_gen"
     },
-    "memo": "option prediction"
+    "memo": "option prediction, with augmentation"
 }

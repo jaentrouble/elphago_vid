@@ -39,7 +39,23 @@ class AdviceDataset(Dataset):
         cut_img = loaded_img[:,rand_top:-rand_bottom,rand_left:-rand_right]
         cut_img = cut_img.to(torch.float32)/ 255
         return self.transform(cut_img), advice_idx
+
+class AdviceDatasetAug(AdviceDataset):
+    def __init__(self, data_dir, multiplier) -> None:
+        super().__init__(data_dir, multiplier)
+        self.transform = transforms.Compose([
+            transforms.RandAugment(),
+            transforms.Resize((64,288)),
+        ])
     
+    def __getitem__(self, idx):
+        advice_idx = idx % 132
+        img_idx = random.randrange(0,self.img_lens[advice_idx])
+        loaded_img = read_image(str(self.img_path_list[advice_idx][img_idx]))
+        transformed_img = self.transform(loaded_img)
+        transformed_img = transformed_img.to(torch.float32)/ 255
+        return transformed_img, advice_idx
+
 class AdviceOneOptionDataset(Dataset):
     def __init__(self, data_dir) -> None:
         super().__init__()
@@ -68,7 +84,21 @@ class AdviceOneOptionDataset(Dataset):
         cut_img = loaded_img[:,rand_top:-rand_bottom,rand_left:-rand_right]
         cut_img = cut_img.to(torch.float32)/ 255
         return self.transform(cut_img), self.option_idx[idx]
+
+class AdviceOneOptionDatasetAug(AdviceOneOptionDataset):
+    def __init__(self, data_dir) -> None:
+        super().__init__(data_dir)
+        self.transform = transforms.Compose([
+            transforms.RandAugment(),
+            transforms.Resize((64,288)),
+        ])
     
+    def __getitem__(self, idx):
+        loaded_img = read_image(str(self.img_path_list[idx]))
+        transformed_img = self.transform(loaded_img)
+        transformed_img = transformed_img.to(torch.float32)/ 255
+        return transformed_img, self.option_idx[idx]
+
 class AdviceTwoOptionDataset(Dataset):
     def __init__(self, data_dir) -> None:
         super().__init__()
@@ -99,3 +129,17 @@ class AdviceTwoOptionDataset(Dataset):
         cut_img = loaded_img[:,rand_top:-rand_bottom,rand_left:-rand_right]
         cut_img = cut_img.to(torch.float32)/ 255
         return self.transform(cut_img), self.option1_idx[idx], self.option2_idx[idx]
+    
+class AdviceTwoOptionDatasetAug(AdviceTwoOptionDataset):
+    def __init__(self, data_dir) -> None:
+        super().__init__(data_dir)
+        self.transform = transforms.Compose([
+            transforms.RandAugment(),
+            transforms.Resize((64,288)),
+        ])
+    
+    def __getitem__(self, idx):
+        loaded_img = read_image(str(self.img_path_list[idx]))
+        transformed_img = self.transform(loaded_img)
+        transformed_img = transformed_img.to(torch.float32)/ 255
+        return transformed_img, self.option1_idx[idx], self.option2_idx[idx]

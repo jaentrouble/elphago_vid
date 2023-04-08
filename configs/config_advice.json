@@ -1,17 +1,17 @@
 {
-    "test_name": "advice_resnet50_1",
+    "test_name": "advice_resnet18_aug_1",
     "batch_size": 32,
     "epochs": -1,
-    "patience": 100,
+    "patience": 20,
     "lr": 1e-3,
-    "model_name": "vision_resnet50",
+    "model_name": "vision_resnet18",
     "model_kwargs": {
         "num_classes": 132
     },
-    "dataset_name": "AdviceDataset",
+    "dataset_name": "AdviceDatasetAug",
     "dataset_kwargs": {
         "data_dir": "data/advice_gen",
         "multiplier": 320
     },
-    "memo": "try resnet50"
+    "memo": "try augmentation with resnet 18"
 }
