@@ -2,6 +2,7 @@ import tkinter as tk
 import numpy as np
 from PIL import Image, ImageTk, ImageGrab
 from image_analyzer import ImageAnalyzer
+from value_analyzer import ValueAnalyzer
 import pandas as pd
 import json
 
@@ -9,6 +10,8 @@ MESSAGE_PATH = 'data/message_clean.csv'
 OPT_NAME_PATH = 'data/options.csv'
 ONE_OPT_ADV_PATH = 'data/one_option_adv.json'
 TWO_OPT_ADV_PATH = 'data/two_option_adv.json'
+ADV_IDX_CONV = 'data/adv_idx_convert.csv'
+ADV_IDX_CONV_TWO = 'data/adv_idx_convert_two_opt.json'
 
 
 class ClipboardImageApp:
@@ -48,13 +51,14 @@ class ClipboardImageApp:
             self.rect_texts.append(rect_text)
 
 
+        self.options_idx = [0, 36, 9, 13, 11]
 
         self.image_np = None
-        self.current_mode = 'top_left'
-        self.tl_h = None
-        self.tl_w = None
-        self.br_h = None
-        self.br_w = None
+        # self.current_mode = 'top_left'
+        # self.tl_h = None
+        # self.tl_w = None
+        # self.br_h = None
+        # self.br_w = None
 
         self.image_analyzer = ImageAnalyzer()
 
@@ -66,27 +70,26 @@ class ClipboardImageApp:
             self.two_option_adv = json.load(f)
 
 
-
     def analyze_image(self):
         if self.image_np is not None:
-            options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
+            options, is_avail, adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
             options_str = ["▣"*i + "□"*(10-i) for i in options]
             is_avail_str = ['가능' if i else '봉인' for i in is_avail]
             for i in range(5):
                 self.label_text_vars[i].set(f"{is_avail_str[i]} {options_str[i]}")
-            for i, (og, ap, op, tp1, tp2) in enumerate(zip(opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2)):
+            for i, (ag, ap, op, tp1, tp2) in enumerate(zip(adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2)):
                 adv_str = self.messages.iloc[ap].Desc1
                 if ap in self.one_option_adv:
                     adv_str = adv_str.replace('{0}', self.options.iloc[op].option_name)
                 elif ap in self.two_option_adv:
                     adv_str = adv_str.replace('{0}', self.options.iloc[tp1].option_name)
                     adv_str = adv_str.replace('{1}', self.options.iloc[tp2].option_name)
-                if og == 0:
+                if ag == 0:
                     gauge_str = ''
-                elif og > 0:
-                    gauge_str = '◆' * og + '◇' * (3 - og)
-                elif og < 0:
-                    gauge_str = '●' * (-og) + '○' * (6 + og)
+                elif ag > 0:
+                    gauge_str = '◆' * ag + '◇' * (3 - ag)
+                elif ag < 0:
+                    gauge_str = '●' * (-ag) + '○' * (6 + ag)
                 self.update_rect_text(i, gauge_str + '\n' + adv_str)
             self.label_text_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
         else:
