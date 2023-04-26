@@ -4,6 +4,8 @@ import json
 import models
 import pandas as pd
 from torchvision import transforms
+from value_analyzer import ValueAnalyzer
+from index_converter import AdvIdxConverter
 
 RATIO_DATA = 'data/ratio_data.json'
 ADVICE_MODEL = 'advice_resnet18_aug_1'
@@ -80,6 +82,10 @@ class ImageAnalyzer():
         
         self.resize_advice = transforms.Resize((64, 288))
         self.resize_enchant_n = transforms.Resize((16, 32))
+
+        # !TODO: explicit path
+        self.value_analyzer = ValueAnalyzer()
+        self.index_converter = AdvIdxConverter()
 
 
     def set_abs_values(self, left_top, right_bottom):

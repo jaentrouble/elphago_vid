@@ -6,6 +6,8 @@ ADV_IDX_CONV = 'data/adv_idx_convert.csv'
 ADV_IDX_CONV_TWO = 'data/adv_idx_convert_two_opt.json'
 
 class AdvIdxConverter():
+    SLEEP = 'sleep'
+    RESET = 'reset'
     def __init__(self) -> None:
         self.conv_table = pd.read_csv(ADV_IDX_CONV)
         with open(ADV_IDX_CONV_TWO, 'r') as f:
@@ -48,4 +50,22 @@ class AdvIdxConverter():
                     possible_advs.append(
                         self.conv_table.loc[adv_pred[i]-1, f'o_{j}']
                     )
-                    # TODO: Think of what to do with selectable advices (type 1)
+            elif adv_type == 2:
+                converted_adv_pred.append(
+                    self.conv_table.loc[adv_pred[i], 'default']
+                )
+            elif adv_type == -1:
+                converted_adv_pred.append(
+                    self.conv_two_table[str(adv_pred[i])][f"{opt_two_pred_1[i]}{opt_two_pred_2[i]}"]
+                )
+            elif adv_type == -2:
+                converted_adv_pred.append(
+                    self.SLEEP
+                )
+            elif adv_type == -3:
+                converted_adv_pred.append(
+                    self.RESET
+                )
+            else:
+                raise ValueError('adv_type is not in [-3, 2]')
+        return converted_adv_pred
