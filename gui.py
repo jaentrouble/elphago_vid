@@ -3,6 +3,7 @@ import numpy as np
 from PIL import Image, ImageTk, ImageGrab
 from image_analyzer import ImageAnalyzer
 from value_analyzer import ValueAnalyzer
+from index_converter import AdvIdxConverter
 import pandas as pd
 import json
 
@@ -50,8 +51,8 @@ class ClipboardImageApp:
             rect_text.pack(fill=tk.BOTH, expand=True)
             self.rect_texts.append(rect_text)
 
-
-        self.options_idx = [0, 36, 9, 13, 11]
+        # !Delete later: only for testing
+        self.options_idx = np.array([9, 36, 10, 4, 11])
 
         self.image_np = None
         # self.current_mode = 'top_left'
@@ -60,7 +61,10 @@ class ClipboardImageApp:
         # self.br_h = None
         # self.br_w = None
 
+        # !TODO: Explicit path
         self.image_analyzer = ImageAnalyzer()
+        self.value_analyzer = ValueAnalyzer()
+        self.adv_idx_converter = AdvIdxConverter()
 
         self.messages = pd.read_csv(MESSAGE_PATH)
         self.options = pd.read_csv(OPT_NAME_PATH)
@@ -75,6 +79,22 @@ class ClipboardImageApp:
             options, is_avail, adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
             options_str = ["▣"*i + "□"*(10-i) for i in options]
             is_avail_str = ['가능' if i else '봉인' for i in is_avail]
+            # ! Place to analyze value
+            converted_adv_pred = self.adv_idx_converter.convert(
+                self.options_idx,
+                adv_pred,
+                opt_one_pred,
+                opt_two_pred_1,
+                opt_two_pred_2
+            )
+            adv_vals, curve_vals, final_vals = self.value_analyzer.get_value(
+                options,
+                is_avail,
+                adv_gauge,
+                converted_adv_pred,
+                enchant_n_pred,
+            )
+
             for i in range(5):
                 self.label_text_vars[i].set(f"{is_avail_str[i]} {options_str[i]}")
             for i, (ag, ap, op, tp1, tp2) in enumerate(zip(adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2)):
@@ -90,7 +110,11 @@ class ClipboardImageApp:
                     gauge_str = '◆' * ag + '◇' * (3 - ag)
                 elif ag < 0:
                     gauge_str = '●' * (-ag) + '○' * (6 + ag)
-                self.update_rect_text(i, gauge_str + '\n' + adv_str)
+                self.update_rect_text(i, gauge_str + '\n' + adv_str
+                                        + '\n' + str(adv_vals[i])
+                                        + '\n' + str(curve_vals[i])
+                                        + '\n' + str(final_vals[i]))
+                # self.update_rect_text(i, gauge_str + '\n' + adv_str)
             self.label_text_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
         else:
             print("No image to analyze")
@@ -116,10 +140,11 @@ class ClipboardImageApp:
             img_rgb = img.convert('RGB')
             img_rgb = img_rgb.resize((1920,1080), Image.Resampling.BILINEAR)
             self.image_np = np.array(img_rgb)
-            self.analyze_image()
+
         except Exception as e:
             print(f"Error getting image from clipboard: {e}")
             return None
+        self.analyze_image()
 
     def display_image(self, img_rgb):
         if img_rgb:

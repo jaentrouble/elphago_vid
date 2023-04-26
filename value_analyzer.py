@@ -1,4 +1,5 @@
 import numpy as np
+import index_converter
 
 ADV_PATH = 'data/values/advice_counting_53_44_any_large2_re6_fl16.npz'
 CURVE_PATH = 'data/values/curve_counting_53_44_any_v_re4.npy'
@@ -18,9 +19,7 @@ class ValueAnalyzer():
         is_avail: list[bool],
         adv_gauge: list[int],
         adv_pred: list[int],
-        adv_sleeping: list[bool],
         enchant_n_pred: int,
-        disable_left: int
     ):
         """get_value
         enchant_n_pred: Assumes enchant_n_pred is 0-indexed
@@ -28,25 +27,17 @@ class ValueAnalyzer():
         tmp_opt = options.copy()
         for i, i_a in enumerate(is_avail):
             if not i_a:
-                tmp_opt[i] = 0
+                tmp_opt[i] = 11
+        disable_left = np.sum(is_avail)-2
         is_disable_turn = enchant_n_pred == disable_left
         disable_idx = disable_left-1 if is_disable_turn else disable_left
-        adv_vals = []
         curve_vals = []
-        for i, (a_s, a_p) in enumerate(zip(adv_sleeping, adv_pred)):
-            adv_val = self.advice_table[
-                tmp_opt[0],
-                tmp_opt[1],
-                tmp_opt[2],
-                tmp_opt[3],
-                tmp_opt[4],
-                enchant_n_pred,
-                a_p
-            ]
+        tmp_adv_gauge = adv_gauge.copy()
+        for i, a_p in enumerate(adv_pred):
+            if a_p == index_converter.AdvIdxConverter.SLEEP:
+                tmp_adv_gauge[i] = -7
+        for i in range(len(tmp_adv_gauge)):
             if enchant_n_pred > 1:
-                tmp_adv_gauge = adv_gauge.copy()
-                if a_s:
-                    tmp_adv_gauge[i] = -7
                 next_adv_gauge = self.next_adv_gauge(tmp_adv_gauge, i)
                 curve_val = self.curve_table[
                     next_adv_gauge[0]+7,
@@ -56,10 +47,46 @@ class ValueAnalyzer():
                     disable_idx
                 ]
             else:
-                curve_val = None
-            adv_vals.append(adv_val)
+                curve_val = 1
             curve_vals.append(curve_val)
-        return adv_vals, curve_vals
+        adv_vals = []
+        final_vals = []
+        for i, a_p in enumerate(adv_pred):
+            # Unusual cases
+            if isinstance(a_p, str):
+                adv_vals.append(0)
+                final_vals.append(0)
+                continue
+            elif isinstance(a_p, list):
+                adv_val = []
+                final_val = []
+                for a in a_p:
+                    adv_val.append(self.advice_table[
+                        tmp_opt[0],
+                        tmp_opt[1],
+                        tmp_opt[2],
+                        tmp_opt[3],
+                        tmp_opt[4],
+                        enchant_n_pred,
+                        a
+                    ])
+                    final_val.append((adv_val[-1]**2)* curve_val)
+                
+            else:
+                a_p = int(a_p)
+                adv_val = self.advice_table[
+                    tmp_opt[0],
+                    tmp_opt[1],
+                    tmp_opt[2],
+                    tmp_opt[3],
+                    tmp_opt[4],
+                    enchant_n_pred,
+                    a_p
+                ]
+                final_val = (adv_val**2) * curve_val
+            adv_vals.append(adv_val)
+            final_vals.append(final_val)
+        return adv_vals, curve_vals, final_vals
 
     def adv_gauge_one_update(self, adv_gauge, chosen):
         if adv_gauge == -7:
