@@ -31,7 +31,6 @@ class AdvIdxConverter():
             opt_two_pred_2: (3,)
         """
         converted_adv_pred = []
-        is_sleeping = [False]*3
         for i in range(3):
             adv_type = self.conv_table.loc[adv_pred[i], 'type']
             if adv_type == 0:
