@@ -11,7 +11,7 @@ ADVICE_MODEL = 'advice_resnet18_aug_1'
 ADVICE_ONE_MODEL = 'advice_one_resnet18_aug_1'
 ADVICE_TWO_MODEL = 'advice_two_resnet18_aug_2'
 ENCHANT_N_MODEL = 'enchant_n_resnet18_aug_1'
-OPTION_MODEL = 'option_resnet18_aug_0'
+OPTION_MODEL = 'option_resnet18_aug_1'
 
 class ImageAnalyzer():
     def __init__(
