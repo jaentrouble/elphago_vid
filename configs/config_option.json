@@ -1,5 +1,5 @@
 {
-    "test_name": "option_resnet18_aug_0",
+    "test_name": "option_resnet18_aug_1",
     "batch_size": 32,
     "epochs": -1,
     "patience": 10,
@@ -13,5 +13,5 @@
         "base_img_path": "data/option_background.png",
         "options_data_path": "data/options.csv"
     },
-    "memo": "resnet18 with augmentation"
+    "memo": "resnet18 with augmentation + resize"
 }

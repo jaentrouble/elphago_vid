@@ -2,13 +2,14 @@ import torch
 import numpy as np
 import json
 import models
-import pandas as pd
 from torchvision import transforms
+# ! Remove
+import matplotlib.pyplot as plt
 
 RATIO_DATA = 'data/ratio_data.json'
 ADVICE_MODEL = 'advice_resnet18_aug_1'
 ADVICE_ONE_MODEL = 'advice_one_resnet18_aug_1'
-ADVICE_TWO_MODEL = 'advice_two_resnet18_aug_1'
+ADVICE_TWO_MODEL = 'advice_two_resnet18_aug_2'
 ENCHANT_N_MODEL = 'enchant_n_resnet18_aug_1'
 OPTION_MODEL = 'option_resnet18_aug_0'
 
@@ -63,36 +64,36 @@ class ImageAnalyzer():
         with open(f'logs/{advice_model_name}/config.json') as f:
             advice_config = json.load(f)
         advice_model = getattr(models, advice_config['model_name'])(**advice_config['model_kwargs'])
-        advice_model.load_state_dict(torch.load(f'logs/{advice_model_name}/checkpoints/best_acc.pt'))
+        advice_model.load_state_dict(torch.load(f'logs/{advice_model_name}/checkpoints/best_acc.pt', map_location='cpu'))
         self.advice_model = advice_model.eval()
 
         with open(f'logs/{advice_one_model_name}/config.json') as f:
             advice_one_config = json.load(f)
         advice_one_model = getattr(models, advice_one_config['model_name'])(**advice_one_config['model_kwargs'])
-        advice_one_model.load_state_dict(torch.load(f'logs/{advice_one_model_name}/checkpoints/best_acc.pt'))
+        advice_one_model.load_state_dict(torch.load(f'logs/{advice_one_model_name}/checkpoints/best_acc.pt', map_location='cpu'))
         self.advice_one_model = advice_one_model.eval()
 
         with open(f'logs/{advice_two_model_name}/config.json') as f:
             advice_two_config = json.load(f)
         advice_two_model = getattr(models, advice_two_config['model_name'])(**advice_two_config['model_kwargs'])
-        advice_two_model.load_state_dict(torch.load(f'logs/{advice_two_model_name}/checkpoints/best_acc.pt'))
+        advice_two_model.load_state_dict(torch.load(f'logs/{advice_two_model_name}/checkpoints/best_acc.pt', map_location='cpu'))
         self.advice_two_model = advice_two_model.eval()
 
         with open(f'logs/{enchant_n_model_name}/config.json') as f:
             enchant_n_config = json.load(f)
         enchant_n_model = getattr(models, enchant_n_config['model_name'])(**enchant_n_config['model_kwargs'])
-        enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt'))
+        enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt', map_location='cpu'))
         self.enchant_n_model = enchant_n_model.eval()
 
         with open(f'logs/{option_model_name}/config.json') as f:
             option_config = json.load(f)
         option_model = getattr(models, option_config['model_name'])(**option_config['model_kwargs'])
-        option_model.load_state_dict(torch.load(f'logs/{option_model_name}/checkpoints/best_acc.pt'))
+        option_model.load_state_dict(torch.load(f'logs/{option_model_name}/checkpoints/best_acc.pt', map_location='cpu'))
         self.option_model = option_model.eval()
         
-        self.resize_advice = transforms.Resize((64, 288))
-        self.resize_enchant_n = transforms.Resize((16, 32))
-        self.resize_option = transforms.Resize((20,105))
+        self.resize_advice = transforms.Resize((64, 288), antialias=True)
+        self.resize_enchant_n = transforms.Resize((16, 32), antialias=True)
+        self.resize_option = transforms.Resize((20,105), antialias=True)
 
 
     def set_abs_values(self, left_top, right_bottom):
@@ -245,6 +246,8 @@ class ImageAnalyzer():
             offset = int(self.slot_spacing_height*i)
             option_img = img[self.abs_option_top_left[0]+offset:self.abs_option_bottom_right[0]+offset, 
                              self.abs_option_top_left[1]:self.abs_option_bottom_right[1]]
+            plt.imshow(option_img)
+            plt.show()
             option_img_tensor = torch.from_numpy(option_img).permute(2,0,1).unsqueeze(0).float()/255
             option_img_tensor = self.resize_option(option_img_tensor)
             option_imgs.append(option_img_tensor)

@@ -22,16 +22,9 @@ class ClipboardImageApp:
 
         self.canvas = tk.Canvas(self.window, width=300, height=200)
         self.canvas.grid(row=0, column=0, columnspan=3, sticky="nsew")
-        # self.canvas.bind("<Button-1>", self.on_canvas_click)
 
         self.button = tk.Button(self.window, text="Get Image from Clipboard", command=self.on_button_click)
         self.button.grid(row=1, column=1, sticky="nsew")
-
-        # self.top_left_button = tk.Button(self.window, text="Top Left", command=self.set_top_left_mode)
-        # self.top_left_button.pack()
-
-        # self.bottom_right_button = tk.Button(self.window, text="Bottom Right", command=self.set_bottom_right_mode)
-        # self.bottom_right_button.pack()
 
         self.option_state_vars = [tk.StringVar() for _ in range(6)]
         self.option_name_vars = [tk.StringVar() for _ in range(6)]
@@ -71,13 +64,7 @@ class ClipboardImageApp:
         self.options_idx = None
 
         self.image_np = None
-        # self.current_mode = 'top_left'
-        # self.tl_h = None
-        # self.tl_w = None
-        # self.br_h = None
-        # self.br_w = None
 
-        # !TODO: Explicit path
         self.image_analyzer = ImageAnalyzer()
         self.value_analyzer = ValueAnalyzer()
         self.adv_idx_converter = AdvIdxConverter()
