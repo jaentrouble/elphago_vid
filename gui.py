@@ -49,7 +49,7 @@ class ClipboardImageApp:
             self.window.columnconfigure(i, weight=1)
             self.rect_frames.append(rect_frame)
 
-            rect_text = tk.Text(rect_frame, bg="white", height=7,width=40, wrap=tk.WORD)
+            rect_text = tk.Text(rect_frame, bg="white", height=15,width=40, wrap=tk.WORD)
             rect_text.tag_configure('center', justify='center')  # Center-align the text
             rect_text.pack(fill=tk.BOTH, expand=True)
             self.rect_texts.append(rect_text)
@@ -91,7 +91,6 @@ class ClipboardImageApp:
             options_str = ["▣"*i + "□"*(10-i) for i in options]
             is_avail_str = ['가능' if i else '봉인' for i in is_avail]
             options_name_str = [self.options.iloc[i].option_name for i in options_idx]
-            # ! Place to analyze value
             converted_adv_pred = self.adv_idx_converter.convert(
                 self.options_idx,
                 adv_pred,
@@ -124,10 +123,25 @@ class ClipboardImageApp:
                     gauge_str = '◆' * ag + '◇' * (3 - ag)
                 elif ag < 0:
                     gauge_str = '●' * (-ag) + '○' * (6 + ag)
-                self.update_rect_text(i, gauge_str + '\n' + adv_str
-                                        + '\n' + str(adv_vals[i])
-                                        + '\n' + str(curve_vals[i])
-                                        + '\n' + str(final_vals[i]))
+                
+                if isinstance(adv_vals[i], list):
+                    rect_text = (
+                        gauge_str + '\n' + adv_str + '\n' +
+                        "합8 확률  |스택 가중치 | 최종 점수\n"
+                    )
+                    max_idx = np.argmax(final_vals[i])
+                    for j in range(5):
+                        if j == max_idx:
+                            rect_text += f"*추천*{adv_vals[i][j]*100:05.2F}    |     {curve_vals[i]*1000:05.2F}  |    {final_vals[i][j]*100000:05.2F}*추천*\n"
+                        else:
+                            rect_text += f"{adv_vals[i][j]*100:05.2F}    |     {curve_vals[i]*1000:05.2F}  |    {final_vals[i][j]*100000:05.2F}\n"
+                else:
+                    rect_text = (
+                        gauge_str + '\n' + adv_str + '\n' +
+                        "합8 확률  |스택 가중치 | 최종 점수\n" +
+                        f"{adv_vals[i]*100:05.2F}    |     {curve_vals[i]*1000:05.2F}  |    {final_vals[i]*100000:05.2F}"
+                    )
+                self.update_rect_text(i, rect_text)
                 # self.update_rect_text(i, gauge_str + '\n' + adv_str)
             self.option_state_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
         else:
