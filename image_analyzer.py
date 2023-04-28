@@ -3,8 +3,6 @@ import numpy as np
 import json
 import models
 from torchvision import transforms
-# ! Remove
-import matplotlib.pyplot as plt
 
 RATIO_DATA = 'data/ratio_data.json'
 ADVICE_MODEL = 'advice_resnet18_aug_1'
@@ -246,8 +244,6 @@ class ImageAnalyzer():
             offset = int(self.slot_spacing_height*i)
             option_img = img[self.abs_option_top_left[0]+offset:self.abs_option_bottom_right[0]+offset, 
                              self.abs_option_top_left[1]:self.abs_option_bottom_right[1]]
-            plt.imshow(option_img)
-            plt.show()
             option_img_tensor = torch.from_numpy(option_img).permute(2,0,1).unsqueeze(0).float()/255
             option_img_tensor = self.resize_option(option_img_tensor)
             option_imgs.append(option_img_tensor)
