@@ -33,10 +33,13 @@ class ClipboardImageApp:
         # self.bottom_right_button = tk.Button(self.window, text="Bottom Right", command=self.set_bottom_right_mode)
         # self.bottom_right_button.pack()
 
-        self.label_text_vars = [tk.StringVar() for _ in range(6)]
+        self.option_state_vars = [tk.StringVar() for _ in range(6)]
+        self.option_name_vars = [tk.StringVar() for _ in range(6)]
         for i in range(6):
-            label = tk.Label(self.window, textvariable=self.label_text_vars[i])
-            label.grid(row=i+2, column=1)
+            label_state = tk.Label(self.window, textvariable=self.option_state_vars[i])
+            label_state.grid(row=i+2, column=1)
+            label_name = tk.Label(self.window, textvariable=self.option_name_vars[i])
+            label_name.grid(row=i+2, column=2)
 
         self.rect_frames = []
         self.rect_texts = []
@@ -46,13 +49,12 @@ class ClipboardImageApp:
             self.window.columnconfigure(i, weight=1)
             self.rect_frames.append(rect_frame)
 
-            rect_text = tk.Text(rect_frame, bg="white", height=5,width=40, wrap=tk.WORD)
+            rect_text = tk.Text(rect_frame, bg="white", height=7,width=40, wrap=tk.WORD)
             rect_text.tag_configure('center', justify='center')  # Center-align the text
             rect_text.pack(fill=tk.BOTH, expand=True)
             self.rect_texts.append(rect_text)
 
-        # !Delete later: only for testing
-        self.options_idx = np.array([9, 36, 10, 4, 11])
+        self.options_idx = None
 
         self.image_np = None
         # self.current_mode = 'top_left'
@@ -76,9 +78,19 @@ class ClipboardImageApp:
 
     def analyze_image(self):
         if self.image_np is not None:
-            options, is_avail, adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred= self.image_analyzer.analyze(self.image_np)
+            (options, 
+             is_avail, 
+             adv_gauge, 
+             adv_pred, 
+             opt_one_pred,
+             opt_two_pred_1, 
+             opt_two_pred_2, 
+             enchant_n_pred, 
+             options_idx)= self.image_analyzer.analyze(self.image_np)
+            self.options_idx = options_idx
             options_str = ["▣"*i + "□"*(10-i) for i in options]
             is_avail_str = ['가능' if i else '봉인' for i in is_avail]
+            options_name_str = [self.options.iloc[i].option_name for i in options_idx]
             # ! Place to analyze value
             converted_adv_pred = self.adv_idx_converter.convert(
                 self.options_idx,
@@ -87,16 +99,18 @@ class ClipboardImageApp:
                 opt_two_pred_1,
                 opt_two_pred_2
             )
-            adv_vals, curve_vals, final_vals = self.value_analyzer.get_value(
+            adv_vals, curve_vals, final_vals, recommand_idx = self.value_analyzer.get_value(
                 options,
                 is_avail,
                 adv_gauge,
                 converted_adv_pred,
                 enchant_n_pred,
             )
-
+            self.white_rect_frame()
+            self.update_rect_frame_color(recommand_idx, '#87CEEB')
             for i in range(5):
-                self.label_text_vars[i].set(f"{is_avail_str[i]} {options_str[i]}")
+                self.option_state_vars[i].set(f"{is_avail_str[i]} {options_str[i]}")
+                self.option_name_vars[i].set(f"{options_name_str[i]}")
             for i, (ag, ap, op, tp1, tp2) in enumerate(zip(adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2)):
                 adv_str = self.messages.iloc[ap].Desc1
                 if ap in self.one_option_adv:
@@ -115,7 +129,7 @@ class ClipboardImageApp:
                                         + '\n' + str(curve_vals[i])
                                         + '\n' + str(final_vals[i]))
                 # self.update_rect_text(i, gauge_str + '\n' + adv_str)
-            self.label_text_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
+            self.option_state_vars[5].set(f"남은 연성 횟수: {enchant_n_pred+1}")
         else:
             print("No image to analyze")
 
@@ -205,6 +219,15 @@ class ClipboardImageApp:
         else:
             print(f"Invalid rectangle index: {index}")
 
+    def update_rect_frame_color(self, index, new_color):
+        if 0 <= index < len(self.rect_texts):
+            self.rect_texts[index].config(bg=new_color)
+        else:
+            print(f"Invalid rectangle index: {index}")
+
+    def white_rect_frame(self):
+        for rt in self.rect_texts:
+            rt.config(bg='#FFFFFF')
 
     def run(self):
         self.window.mainloop()

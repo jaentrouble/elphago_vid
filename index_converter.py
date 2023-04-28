@@ -39,11 +39,12 @@ class AdvIdxConverter():
                 )
 
             elif adv_type == 1:
-                converted_adv_pred = []
+                possible_list = []
                 for j in range(5):
-                    converted_adv_pred.append(
+                    possible_list.append(
                         self.conv_table.loc[adv_pred[i]-1, f'o_{j}']
                     )
+                converted_adv_pred.append(possible_list)
             elif adv_type == 2:
                 found = False
                 for j, o in enumerate(options_idx):
@@ -57,8 +58,16 @@ class AdvIdxConverter():
                     raise ValueError(f'opt_one_pred {opt_one_pred[i]} is not in options_idx {options_idx}')
 
             elif adv_type == -1:
+                for j, o in enumerate(options_idx):
+                    if o == opt_two_pred_1[i]:
+                        opt_one_converted = j
+                        break
+                for j, o in enumerate(options_idx):
+                    if o == opt_two_pred_2[i]:
+                        opt_two_converted = j
+                        break
                 converted_adv_pred.append(
-                    self.conv_two_table[str(adv_pred[i])][f"{opt_two_pred_1[i]}{opt_two_pred_2[i]}"]
+                    self.conv_two_table[str(adv_pred[i])][f"{opt_one_converted}{opt_two_converted}"]
                 )
             elif adv_type == -2:
                 converted_adv_pred.append(

@@ -36,7 +36,7 @@ class ValueAnalyzer():
         for i, a_p in enumerate(adv_pred):
             if a_p == index_converter.AdvIdxConverter.SLEEP:
                 tmp_adv_gauge[i] = -7
-        for i in range(len(tmp_adv_gauge)):
+        for i in range(3):
             if enchant_n_pred > 1:
                 next_adv_gauge = self.next_adv_gauge(tmp_adv_gauge, i)
                 curve_val = self.curve_table[
@@ -51,16 +51,19 @@ class ValueAnalyzer():
             curve_vals.append(curve_val)
         adv_vals = []
         final_vals = []
+        max_final_vals = []
         for i, a_p in enumerate(adv_pred):
             # Unusual cases
             if isinstance(a_p, str):
                 adv_vals.append(0)
                 final_vals.append(0)
+                max_final_vals.append(0)
                 continue
             elif isinstance(a_p, list):
                 adv_val = []
                 final_val = []
                 for a in a_p:
+                    a = int(a)
                     adv_val.append(self.advice_table[
                         tmp_opt[0],
                         tmp_opt[1],
@@ -71,6 +74,7 @@ class ValueAnalyzer():
                         a
                     ])
                     final_val.append((adv_val[-1]**2)* curve_val)
+                max_final_vals.append(max(final_val))
                 
             else:
                 a_p = int(a_p)
@@ -84,13 +88,14 @@ class ValueAnalyzer():
                     a_p
                 ]
                 final_val = (adv_val**2) * curve_val
+                max_final_vals.append(final_val)
             adv_vals.append(adv_val)
             final_vals.append(final_val)
-        return adv_vals, curve_vals, final_vals
+        return adv_vals, curve_vals, final_vals, np.argmax(max_final_vals)
 
     def adv_gauge_one_update(self, adv_gauge, chosen):
         if adv_gauge == -7:
-            return
+            return -7
         if adv_gauge == 3 or adv_gauge == -6:
             adv_gauge = 0
         if chosen:

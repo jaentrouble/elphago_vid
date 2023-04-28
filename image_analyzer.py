@@ -10,6 +10,7 @@ ADVICE_MODEL = 'advice_resnet18_aug_1'
 ADVICE_ONE_MODEL = 'advice_one_resnet18_aug_1'
 ADVICE_TWO_MODEL = 'advice_two_resnet18_aug_1'
 ENCHANT_N_MODEL = 'enchant_n_resnet18_aug_1'
+OPTION_MODEL = 'option_resnet18_aug_0'
 
 class ImageAnalyzer():
     def __init__(
@@ -19,6 +20,7 @@ class ImageAnalyzer():
         advice_one_model_name=ADVICE_ONE_MODEL,
         advice_two_model_name=ADVICE_TWO_MODEL,
         enchant_n_model_name=ENCHANT_N_MODEL,
+        option_model_name=OPTION_MODEL,
     ) -> None:
         with open(ratio_data_path, 'r') as f:
             self.ratio_data = json.load(f)
@@ -51,6 +53,10 @@ class ImageAnalyzer():
         self.enchant_n_top_left_to_slot_top_left_ratio_w = self.ratio_data["enchant_n_top_left_to_slot_top_left_ratio_w"]
         self.enchant_n_bottom_right_to_slot_top_left_ratio_h = self.ratio_data["enchant_n_bottom_right_to_slot_top_left_ratio_h"]
         self.enchant_n_bottom_right_to_slot_top_left_ratio_w = self.ratio_data["enchant_n_bottom_right_to_slot_top_left_ratio_w"]
+        self.option_top_left_to_slot_top_left_ratio_h = self.ratio_data["option_top_left_to_slot_top_left_ratio_h"]
+        self.option_top_left_to_slot_top_left_ratio_w = self.ratio_data["option_top_left_to_slot_top_left_ratio_w"]
+        self.option_height_to_slot_height_ratio = self.ratio_data["option_height_to_slot_height_ratio"]
+        self.option_width_to_slot_width_ratio = self.ratio_data["option_width_to_slot_width_ratio"]
 
         self.set_abs_values(self.ratio_data['fhd_left_top'], self.ratio_data['fhd_right_bottom'])
 
@@ -77,9 +83,16 @@ class ImageAnalyzer():
         enchant_n_model = getattr(models, enchant_n_config['model_name'])(**enchant_n_config['model_kwargs'])
         enchant_n_model.load_state_dict(torch.load(f'logs/{enchant_n_model_name}/checkpoints/best_acc.pt'))
         self.enchant_n_model = enchant_n_model.eval()
+
+        with open(f'logs/{option_model_name}/config.json') as f:
+            option_config = json.load(f)
+        option_model = getattr(models, option_config['model_name'])(**option_config['model_kwargs'])
+        option_model.load_state_dict(torch.load(f'logs/{option_model_name}/checkpoints/best_acc.pt'))
+        self.option_model = option_model.eval()
         
         self.resize_advice = transforms.Resize((64, 288))
         self.resize_enchant_n = transforms.Resize((16, 32))
+        self.resize_option = transforms.Resize((20,105))
 
 
     def set_abs_values(self, left_top, right_bottom):
@@ -87,23 +100,23 @@ class ImageAnalyzer():
         width = right_bottom[1] - left_top[1]
         abs_slot_height = int(height * self.per_slot_height_ratio)
         abs_slot_width = int(width * self.per_slot_width_ratio)
-        slot_spacing_width = width/9
-        slot_spacing_height = height/4
+        self.slot_spacing_width = width/9
+        self.slot_spacing_height = height/4
         self.opt_color_pos = np.zeros((5,10,4), dtype=int)
         for i in range(10):
             for j in range(5):
-                self.opt_color_pos[j,i,0] = left_top[0]+int(j*slot_spacing_height)-abs_slot_height//2
-                self.opt_color_pos[j,i,1] = left_top[0]+int(j*slot_spacing_height)+abs_slot_height//2
-                self.opt_color_pos[j,i,2] = left_top[1]+int(i*slot_spacing_width)-abs_slot_width//2
-                self.opt_color_pos[j,i,3] = left_top[1]+int(i*slot_spacing_width)+abs_slot_width//2
+                self.opt_color_pos[j,i,0] = left_top[0]+int(j*self.slot_spacing_height)-abs_slot_height//2
+                self.opt_color_pos[j,i,1] = left_top[0]+int(j*self.slot_spacing_height)+abs_slot_height//2
+                self.opt_color_pos[j,i,2] = left_top[1]+int(i*self.slot_spacing_width)-abs_slot_width//2
+                self.opt_color_pos[j,i,3] = left_top[1]+int(i*self.slot_spacing_width)+abs_slot_width//2
         
         self.prob_pos = np.zeros((5,4), dtype=int)
         abs_prob_height = int(self.prob_height_to_slot_height_ratio*height)
         abs_prob_width = int(self.prob_width_to_slot_width_ratio*width)
         prob_top_center = (left_top[0], left_top[1]+int(self.prob_top_center_to_left_top_ratio_w*width))
         for i in range(5):
-            self.prob_pos[i,0] = prob_top_center[0]+int(i*slot_spacing_height)-abs_prob_height//2
-            self.prob_pos[i,1] = prob_top_center[0]+int(i*slot_spacing_height)+abs_prob_height//2
+            self.prob_pos[i,0] = prob_top_center[0]+int(i*self.slot_spacing_height)-abs_prob_height//2
+            self.prob_pos[i,1] = prob_top_center[0]+int(i*self.slot_spacing_height)+abs_prob_height//2
             self.prob_pos[i,2] = prob_top_center[1]-abs_prob_width//2
             self.prob_pos[i,3] = prob_top_center[1]+abs_prob_width//2
         
@@ -146,6 +159,11 @@ class ImageAnalyzer():
                                        int(self.enchant_n_top_left_to_slot_top_left_ratio_w*width+left_top[1]))
         self.abs_enchant_n_bottom_right = (int(self.enchant_n_bottom_right_to_slot_top_left_ratio_h*height + left_top[0]),
                                            int(self.enchant_n_bottom_right_to_slot_top_left_ratio_w*width + left_top[1]))
+        
+        self.abs_option_top_left = (int(self.option_top_left_to_slot_top_left_ratio_h*height + left_top[0]), 
+                                    int(self.option_top_left_to_slot_top_left_ratio_w*width+left_top[1]))
+        self.abs_option_bottom_right = (int(self.option_top_left_to_slot_top_left_ratio_h*height + left_top[0] + self.option_height_to_slot_height_ratio*height), 
+                                        int(self.option_top_left_to_slot_top_left_ratio_w*width + left_top[1] + self.option_width_to_slot_width_ratio*width))
 
     def analyze(self, img:np.array):
         opt_color_average = np.zeros((5,10,3)) # For debugging
@@ -222,4 +240,16 @@ class ImageAnalyzer():
 
         enchant_n_pred = self.enchant_n_model(enchant_n_img_tensor).argmax(dim=1).cpu().item()
 
-        return options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred
+        option_imgs = []
+        for i in range(5):
+            offset = int(self.slot_spacing_height*i)
+            option_img = img[self.abs_option_top_left[0]+offset:self.abs_option_bottom_right[0]+offset, 
+                             self.abs_option_top_left[1]:self.abs_option_bottom_right[1]]
+            option_img_tensor = torch.from_numpy(option_img).permute(2,0,1).unsqueeze(0).float()/255
+            option_img_tensor = self.resize_option(option_img_tensor)
+            option_imgs.append(option_img_tensor)
+        option_imgs = torch.cat(option_imgs, dim=0)
+        with torch.no_grad():
+            options_idx = self.option_model(option_imgs).argmax(dim=1).numpy()
+
+        return options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred, options_idx
