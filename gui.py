@@ -40,6 +40,20 @@ class ClipboardImageApp:
             label_state.grid(row=i+2, column=1)
             label_name = tk.Label(self.window, textvariable=self.option_name_vars[i])
             label_name.grid(row=i+2, column=2)
+        # Caution text color red
+        
+        self.caution_0 = tk.Label(self.window, text="주의: 연산 효율을 위해 충분히 구린 옵션은 0으로 뜹니다.",
+                                  fg='red')
+        self.caution_0.grid(row=2, column=0)
+        self.caution_1 = tk.Label(self.window, text="따라서 반드시 확률이 0임을 의미하지 않습니다.",
+                                  fg='red')
+        self.caution_1.grid(row=3, column=0)
+        self.caution_2 = tk.Label(self.window, text="주의: 옵션의 가치는 고려되지 않습니다.",
+                                  fg='red')
+        self.caution_2.grid(row=5, column=0)
+        self.caution_3 = tk.Label(self.window, text="특정 옵션 저격은 스스로 판단해주세요.",
+                                  fg='red')
+        self.caution_3.grid(row=6, column=0)
 
         self.rect_frames = []
         self.rect_texts = []
@@ -49,7 +63,7 @@ class ClipboardImageApp:
             self.window.columnconfigure(i, weight=1)
             self.rect_frames.append(rect_frame)
 
-            rect_text = tk.Text(rect_frame, bg="white", height=15,width=40, wrap=tk.WORD)
+            rect_text = tk.Text(rect_frame, bg="white", height=11,width=40, wrap=tk.WORD)
             rect_text.tag_configure('center', justify='center')  # Center-align the text
             rect_text.pack(fill=tk.BOTH, expand=True)
             self.rect_texts.append(rect_text)
