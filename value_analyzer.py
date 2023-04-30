@@ -1,7 +1,7 @@
 import numpy as np
 import index_converter
 
-ADV_PATH = 'data/values/advice_counting_53_44_any_large2_re6_fl16.npz'
+ADV_PATH = 'data/values/advice_counting_53_44_any_large2_explore_0_fl16.npz'
 CURVE_PATH = 'data/values/curve_counting_53_44_any_v_re4.npy'
 
 class ValueAnalyzer():
