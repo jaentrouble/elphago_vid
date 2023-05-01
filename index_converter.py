@@ -6,6 +6,10 @@ import numpy as np
 ADV_IDX_CONV = 'data/adv_idx_convert.csv'
 ADV_IDX_CONV_TWO = 'data/adv_idx_convert_two_opt.json'
 
+class AdvOptUnmatchedError(Exception):
+    pass
+
+
 class AdvIdxConverter():
     SLEEP = 'sleep'
     RESET = 'reset'
@@ -56,7 +60,7 @@ class AdvIdxConverter():
                         found = True
                         break
                 if not found:
-                    raise ValueError(f'opt_one_pred {opt_one_pred[i]} is not in options_idx {options_idx}')
+                    raise AdvOptUnmatchedError(f'opt_one_pred {opt_one_pred[i]} is not in options_idx {options_idx}')
 
             elif adv_type == -1:
                 found = False
@@ -66,7 +70,7 @@ class AdvIdxConverter():
                         found = True
                         break
                 if not found:
-                    raise ValueError(f'opt_two_pred_1 {opt_two_pred_1[i]} is not in options_idx {options_idx}')
+                    raise AdvOptUnmatchedError(f'opt_two_pred_1 {opt_two_pred_1[i]} is not in options_idx {options_idx}')
                 found = False
                 for j, o in enumerate(options_idx):
                     if o == opt_two_pred_2[i]:
@@ -74,7 +78,7 @@ class AdvIdxConverter():
                         found = True
                         break
                 if not found:
-                    raise ValueError(f'opt_two_pred_2 {opt_two_pred_2[i]} is not in options_idx {options_idx}')
+                    raise AdvOptUnmatchedError(f'opt_two_pred_2 {opt_two_pred_2[i]} is not in options_idx {options_idx}')
                 converted_adv_pred.append(
                     self.conv_two_table[str(adv_pred[i])][f"{opt_one_converted}{opt_two_converted}"]
                 )

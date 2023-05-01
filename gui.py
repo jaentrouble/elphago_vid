@@ -3,7 +3,7 @@ import numpy as np
 from PIL import Image, ImageTk, ImageGrab
 from image_analyzer import ImageAnalyzer
 from value_analyzer import ValueAnalyzer
-from index_converter import AdvIdxConverter
+from index_converter import AdvIdxConverter, AdvOptUnmatchedError
 import pandas as pd
 import json
 
@@ -92,13 +92,20 @@ class ClipboardImageApp:
             options_str = ["▣"*i + "□"*(10-i) for i in options]
             is_avail_str = ['가능' if i else '봉인' for i in is_avail]
             options_name_str = [self.options.iloc[i].option_name for i in options_idx]
-            converted_adv_pred = self.adv_idx_converter.convert(
-                self.options_idx,
-                adv_pred,
-                opt_one_pred,
-                opt_two_pred_1,
-                opt_two_pred_2
-            )
+            try:
+                converted_adv_pred = self.adv_idx_converter.convert(
+                    self.options_idx,
+                    adv_pred,
+                    opt_one_pred,
+                    opt_two_pred_1,
+                    opt_two_pred_2
+                )
+            except AdvOptUnmatchedError:
+                self.white_rect_frame()
+                for i in range(3):
+                    self.update_rect_frame_color(i, '#FF0000')
+                    self.update_rect_text(i, '이미지 인식 오류\n다시 시도하세요')                
+                return
             adv_vals, curve_vals, final_vals, recommand_idx = self.value_analyzer.get_value(
                 options,
                 is_avail,
