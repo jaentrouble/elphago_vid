@@ -33,7 +33,7 @@ class OptionNameDataset(Dataset):
                   *len(self.font_size_list))
         
         self.transform = transforms.Compose([
-            transforms.RandomResizedCrop((20,105)),
+            transforms.GaussianBlur(3, sigma=(0.01, 2.0)),
             transforms.RandAugment(),
         ])
     
