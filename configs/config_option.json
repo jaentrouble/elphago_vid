@@ -13,5 +13,5 @@
         "base_img_path": "data/option_background.png",
         "options_data_path": "data/options.csv"
     },
-    "memo": "resnet18 with augmentation + resize"
+    "memo": "resnet18 with augmentation + gaussian noise"
 }
