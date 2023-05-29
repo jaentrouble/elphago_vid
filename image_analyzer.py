@@ -198,16 +198,16 @@ class ImageAnalyzer():
             for j in range(6):
                 chaos_color_average[i,j] = np.mean(img[self.chaos_color_pos[i,j,0]:self.chaos_color_pos[i,j,1], 
                                                        self.chaos_color_pos[i,j,2]:self.chaos_color_pos[i,j,3]], axis=(0,1))
-        opt_gauge = np.zeros((3), dtype=int)
+        adv_gauge = np.zeros((3), dtype=int)
         for i in range(3):
             for o_c in order_color_average[i]:
                 if o_c[1] > 170:
-                    opt_gauge[i] += 1
+                    adv_gauge[i] += 1
                 else:
                     break
             for c_c in chaos_color_average[i]:
                 if c_c[0] > 170:
-                    opt_gauge[i] -= 1
+                    adv_gauge[i] -= 1
                 else:
                     break
 
@@ -251,4 +251,4 @@ class ImageAnalyzer():
         with torch.no_grad():
             options_idx = self.option_model(option_imgs).argmax(dim=1).numpy()
 
-        return options, is_avail, opt_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred, options_idx
+        return options, is_avail, adv_gauge, adv_pred, opt_one_pred, opt_two_pred_1, opt_two_pred_2, enchant_n_pred, options_idx
